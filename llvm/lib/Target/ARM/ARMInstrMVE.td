@@ -5027,6 +5027,7 @@ class MVE_VADCSBC<string iname, bit I, bit subtract,
   : MVE_qDest_qSrc<iname, "i32", (outs MQPR:$Qd, cl_FPSCR_NZCV:$carryout),
                    !con((ins MQPR:$Qn, MQPR:$Qm), carryin),
                    "$Qd, $Qn, $Qm", vpred_r, "", 0b10, pattern> {
+  bits<0> carryout;
   bits<4> Qn;
 
   let Inst{28} = subtract;
@@ -5037,16 +5038,16 @@ class MVE_VADCSBC<string iname, bit I, bit subtract,
   let Inst{8} = 0b1;
   let Inst{7} = Qn{3};
   let Inst{0} = 0b0;
-
-  // Custom decoder method in order to add the FPSCR operand(s), which
-  // Tablegen won't do right
-  let DecoderMethod = "DecodeMVEVADCInstruction";
 }
 
-def MVE_VADC  : MVE_VADCSBC<"vadc",  0b0, 0b0, (ins cl_FPSCR_NZCV:$carryin)>;
+def MVE_VADC  : MVE_VADCSBC<"vadc",  0b0, 0b0, (ins cl_FPSCR_NZCV:$carryin)> {
+  bits<0> carryin;
+}
 def MVE_VADCI : MVE_VADCSBC<"vadci", 0b1, 0b0, (ins)>;
 
-def MVE_VSBC  : MVE_VADCSBC<"vsbc",  0b0, 0b1, (ins cl_FPSCR_NZCV:$carryin)>;
+def MVE_VSBC  : MVE_VADCSBC<"vsbc",  0b0, 0b1, (ins cl_FPSCR_NZCV:$carryin)> {
+  bits<0> carryin;
+}
 def MVE_VSBCI : MVE_VADCSBC<"vsbci", 0b1, 0b1, (ins)>;
 
 class MVE_VQDMULL<string iname, string suffix, bit size, bit T,

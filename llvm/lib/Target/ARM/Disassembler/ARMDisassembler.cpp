@@ -608,6 +608,12 @@ static DecodeStatus DecodeVCCRRegisterClass(MCInst &Inst,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus
+Decodecl_FPSCR_NZCVRegisterClass(MCInst &Inst, const MCDisassembler *Decoder) {
+  Inst.addOperand(MCOperand::createReg(ARM::FPSCR_NZCV));
+  return MCDisassembler::Success;
+}
+
 // Operand decoding functions.
 
 static DecodeStatus DecodePredicateOperand(MCInst &Inst, unsigned Val,
@@ -2887,32 +2893,6 @@ static DecodeStatus DecodeMVEModImmInstruction(MCInst &Inst, unsigned Insn,
     return MCDisassembler::Fail;
 
   Inst.addOperand(MCOperand::createImm(imm));
-
-  Check(S, DecodeVpredROperand(Inst, Decoder));
-  return S;
-}
-
-static DecodeStatus DecodeMVEVADCInstruction(MCInst &Inst, unsigned Insn,
-                                             uint64_t Address,
-                                             const MCDisassembler *Decoder) {
-  DecodeStatus S = MCDisassembler::Success;
-
-  unsigned Qd = fieldFromInstruction(Insn, 13, 3);
-  Qd |= fieldFromInstruction(Insn, 22, 1) << 3;
-  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qd, Address, Decoder)))
-    return MCDisassembler::Fail;
-  Inst.addOperand(MCOperand::createReg(ARM::FPSCR_NZCV));
-
-  unsigned Qn = fieldFromInstruction(Insn, 17, 3);
-  Qn |= fieldFromInstruction(Insn, 7, 1) << 3;
-  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qn, Address, Decoder)))
-    return MCDisassembler::Fail;
-  unsigned Qm = fieldFromInstruction(Insn, 1, 3);
-  Qm |= fieldFromInstruction(Insn, 5, 1) << 3;
-  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qm, Address, Decoder)))
-    return MCDisassembler::Fail;
-  if (!fieldFromInstruction(Insn, 12, 1)) // I bit clear => need input FPSCR
-    Inst.addOperand(MCOperand::createReg(ARM::FPSCR_NZCV));
 
   Check(S, DecodeVpredROperand(Inst, Decoder));
   return S;
