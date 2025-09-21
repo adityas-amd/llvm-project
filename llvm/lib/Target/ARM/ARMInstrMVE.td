@@ -4128,11 +4128,12 @@ defm MVE_VMINNMAf16 : MVE_VMINNMA<MVE_v8f16, 0b1>;
 
 // start of MVE compares
 
+// Base class for comparing two vector registers
 class MVE_VCMPqq<string suffix, bit bit_28, bits<2> bits_21_20,
                  VCMPPredicateOperand predtype, bits<2> vecsize, list<dag> pattern=[]>
   : MVE_p<(outs VCCR:$P0), (ins MQPR:$Qn, MQPR:$Qm, predtype:$fc),
            NoItinerary, "vcmp", suffix, "$fc, $Qn, $Qm", vpred_n, "", vecsize, pattern> {
-  // Base class for comparing two vector registers
+  bits<0> P0;
   bits<3> fc;
   bits<4> Qn;
   bits<4> Qm;
@@ -4152,16 +4153,6 @@ class MVE_VCMPqq<string suffix, bit bit_28, bits<2> bits_21_20,
   let Inst{0} = fc{1};
 
   let Constraints = "";
-
-  // We need a custom decoder method for these instructions because of
-  // the output VCCR operand, which isn't encoded in the instruction
-  // bits anywhere (there is only one choice for it) but has to be
-  // included in the MC operands so that codegen will be able to track
-  // its data flow between instructions, spill/reload it when
-  // necessary, etc. There seems to be no way to get the Tablegen
-  // decoder to emit an operand that isn't affected by any instruction
-  // bit.
-  let DecoderMethod = "DecodeMVEVCMP<false," # predtype.DecoderMethod # ">";
   let validForTailPredication = 1;
 }
 
@@ -4202,11 +4193,12 @@ def MVE_VCMPs8  : MVE_VCMPqqs<"s8",  0b00>;
 def MVE_VCMPs16 : MVE_VCMPqqs<"s16", 0b01>;
 def MVE_VCMPs32 : MVE_VCMPqqs<"s32", 0b10>;
 
+// Base class for comparing a vector register with a scalar
 class MVE_VCMPqr<string suffix, bit bit_28, bits<2> bits_21_20,
                  VCMPPredicateOperand predtype, bits<2> vecsize, list<dag> pattern=[]>
   : MVE_p<(outs VCCR:$P0), (ins MQPR:$Qn, GPRwithZR:$Rm, predtype:$fc),
            NoItinerary, "vcmp", suffix, "$fc, $Qn, $Rm", vpred_n, "", vecsize, pattern> {
-  // Base class for comparing a vector register with a scalar
+  bits<0> P0;
   bits<3> fc;
   bits<4> Qn;
   bits<4> Rm;
@@ -4225,8 +4217,6 @@ class MVE_VCMPqr<string suffix, bit bit_28, bits<2> bits_21_20,
   let Inst{3-0} = Rm{3-0};
 
   let Constraints = "";
-  // Custom decoder method, for the same reason as MVE_VCMPqq
-  let DecoderMethod = "DecodeMVEVCMP<true," # predtype.DecoderMethod # ">";
   let validForTailPredication = 1;
 }
 
@@ -5762,6 +5752,7 @@ let isReMaterializable = 1 in
 class MVE_VCTPInst<string suffix, bits<2> size, list<dag> pattern=[]>
   : MVE_p<(outs VCCR:$P0), (ins rGPR:$Rn), NoItinerary, "vctp", suffix,
           "$Rn", vpred_n, "", size, pattern> {
+  bits<0> P0;
   bits<4> Rn;
 
   let Inst{28-27} = 0b10;
@@ -5773,7 +5764,6 @@ class MVE_VCTPInst<string suffix, bits<2> size, list<dag> pattern=[]>
   let Unpredictable{10-0} = 0b11111111111;
 
   let Constraints = "";
-  let DecoderMethod = "DecodeMveVCTP";
   let validForTailPredication = 1;
 }
 
@@ -6813,6 +6803,8 @@ let Predicates = [HasMVEFloat] in {
 
 def MVE_VPNOT : MVE_p<(outs VCCR:$P0), (ins VCCR:$P0_in), NoItinerary,
                       "vpnot", "", "", vpred_n, "", 0b00, []> {
+  bits<0> P0;
+  bits<0> P0_in;
   let Inst{31-0} = 0b11111110001100010000111101001101;
   let Unpredictable{19-17} = 0b111;
   let Unpredictable{12} = 0b1;
@@ -6820,7 +6812,6 @@ def MVE_VPNOT : MVE_p<(outs VCCR:$P0), (ins VCCR:$P0_in), NoItinerary,
   let Unpredictable{5} = 0b1;
 
   let Constraints = "";
-  let DecoderMethod = "DecodeMVEVPNOT";
 }
 
 let Predicates = [HasMVEInt] in {
