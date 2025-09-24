@@ -385,12 +385,23 @@ private:
     BlockFrequency Freq;
     /// The virtual register or physical register.
     Register Reg;
+    unsigned SubReg = 0;
+
+    Register HintReg;
+    unsigned HintSubReg = 0;
+
     /// Its currently assigned register.
     /// In case of a physical register Reg == PhysReg.
     MCRegister PhysReg;
 
     HintInfo(BlockFrequency Freq, Register Reg, MCRegister PhysReg)
-        : Freq(Freq), Reg(Reg), PhysReg(PhysReg) {}
+      : Freq(Freq), Reg(Reg), PhysReg(PhysReg) {}
+
+    HintInfo(BlockFrequency Freq,
+             Register Reg, unsigned SubReg,
+             Register HintReg, unsigned HintSubReg)
+      : Freq(Freq), Reg(Reg), SubReg(SubReg),
+      HintReg(HintReg), HintSubReg(HintSubReg) {}
   };
   using HintsInfo = SmallVector<HintInfo, 4>;
 

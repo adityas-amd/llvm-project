@@ -2458,7 +2458,28 @@ void RAGreedy::collectHintInfo(Register Reg, HintsInfo &Out) {
 
     // Push the collected information.
     if (OtherPhysReg) {
-      Out.push_back(HintInfo(MBFI->getBlockFreq(Instr.getParent()), OtherReg,
+      BlockFrequency Freq = MBFI->getBlockFreq(Instr.getParent());
+
+      if (OtherSubReg) {
+        const TargetRegisterClass *OtherRC = MRI->getRegClass(OtherReg);
+        unsigned FullRegCopyCost = OtherRC->getCopyCost();
+
+        const TargetRegisterClass *OtherSubRC = TRI->getSubRegisterClass(OtherRC, OtherSubReg);
+        unsigned SubRegCopyCost = OtherSubRC->getCopyCost();
+
+        BranchProbability Scaling(SubRegCopyCost, FullRegCopyCost);
+        Freq *= Scaling;
+      } else if (SubReg) {
+        unsigned FullRegCopyCost = RC->getCopyCost();
+        const TargetRegisterClass *SubRC = TRI->getSubRegisterClass(RC, SubReg);
+        unsigned SubRegCopyCost = SubRC->getCopyCost();
+
+        BranchProbability Scaling(SubRegCopyCost, FullRegCopyCost);
+        Freq *= Scaling;
+
+      }
+
+      Out.push_back(HintInfo(Freq, OtherReg,
                              OtherPhysReg));
     }
   }
@@ -2471,6 +2492,13 @@ BlockFrequency RAGreedy::getBrokenHintFreq(const HintsInfo &List,
                                            MCRegister PhysReg) {
   BlockFrequency Cost = BlockFrequency(0);
   for (const HintInfo &Info : List) {
+
+    if (!Info.PhysReg) {
+      // Apply subreg hint
+      continue;
+    }
+
+
     if (Info.PhysReg != PhysReg)
       Cost += Info.Freq;
   }
@@ -2536,6 +2564,8 @@ void RAGreedy::tryHintRecoloring(const LiveInterval &VirtReg) {
     // non-identity copies.
     if (CurrPhys != PhysReg) {
       LLVM_DEBUG(dbgs() << "Checking profitability:\n");
+
+      // TODO: Scale by copy cost
       BlockFrequency OldCopiesCost = getBrokenHintFreq(Info, CurrPhys);
       BlockFrequency NewCopiesCost = getBrokenHintFreq(Info, PhysReg);
       LLVM_DEBUG(dbgs() << "Old Cost: " << printBlockFreq(*MBFI, OldCopiesCost)
