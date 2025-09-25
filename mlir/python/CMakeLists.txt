@@ -528,31 +528,32 @@ declare_mlir_python_extension(MLIRPythonExtension.Core
     MLIRCAPIDebug
     MLIRCAPIIR
     MLIRCAPIInterfaces
+    MLIRCAPITransforms
+    MLIRCAPIBuiltin
 
     # Dialects
     MLIRCAPIFunc
 )
 
-# This extension exposes an API to register all dialects, extensions, and passes
-# packaged in upstream MLIR and it is used for the upstream "mlir" Python
-# package. Downstreams will likely want to provide their own and not depend
-# on this one, since it links in the world.
-# Note that this is not added to any top-level source target for transitive
-# inclusion: It must be included explicitly by downstreams if desired. Note that
-# this has a very large impact on what gets built/packaged.
-declare_mlir_python_extension(MLIRPythonExtension.RegisterEverything
-  MODULE_NAME _mlirRegisterEverything
-  ROOT_DIR "${PYTHON_SOURCE_DIR}"
-  PYTHON_BINDINGS_LIBRARY nanobind
-  SOURCES
-    RegisterEverything.cpp
-  PRIVATE_LINK_LIBS
-    LLVMSupport
-  EMBED_CAPI_LINK_LIBS
-    MLIRCAPIConversion
-    MLIRCAPITransforms
-    MLIRCAPIRegisterEverything
-)
+## This extension exposes an API to register all dialects, extensions, and passes
+## packaged in upstream MLIR and it is used for the upstream "mlir" Python
+## package. Downstreams will likely want to provide their own and not depend
+## on this one, since it links in the world.
+## Note that this is not added to any top-level source target for transitive
+## inclusion: It must be included explicitly by downstreams if desired. Note that
+## this has a very large impact on what gets built/packaged.
+#declare_mlir_python_extension(MLIRPythonExtension.RegisterEverything
+#  MODULE_NAME _mlirRegisterEverything
+#  ROOT_DIR "${PYTHON_SOURCE_DIR}"
+#  PYTHON_BINDINGS_LIBRARY nanobind
+#  SOURCES
+#    RegisterEverything.cpp
+#  PRIVATE_LINK_LIBS
+#    LLVMSupport
+#    MLIRCAPIConversion
+#    MLIRCAPITransforms
+#    MLIRCAPIRegisterEverything
+#)
 
 declare_mlir_python_extension(MLIRPythonExtension.Dialects.Linalg.Pybind
   MODULE_NAME _mlirDialectsLinalg
@@ -871,7 +872,6 @@ add_mlir_python_common_capi_library(${MLIR_PYTHON_CAPI_DYLIB_NAME}
     MLIRPythonCAPI.HeaderSources
   DECLARED_SOURCES
     MLIRPythonSources
-    MLIRPythonExtension.RegisterEverything
     ${_ADDL_TEST_SOURCES}
 )
 
@@ -979,7 +979,6 @@ add_mlir_python_modules(MLIRPythonModules
   INSTALL_PREFIX "${MLIR_BINDINGS_PYTHON_INSTALL_PREFIX}"
   DECLARED_SOURCES
     MLIRPythonSources
-    MLIRPythonExtension.RegisterEverything
     MLIRPythonExtension.Core.type_stub_gen
     MLIRPythonCAPICTypesBinding
     ${_ADDL_TEST_SOURCES}

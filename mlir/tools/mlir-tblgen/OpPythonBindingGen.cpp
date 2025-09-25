@@ -47,6 +47,21 @@ _ods_cext.globals.register_traceback_file_exclusion(__file__)
 import builtins
 from typing import Sequence as _Sequence, Union as _Union, Optional as _Optional
 
+import ctypes
+from .._mlir_libs import get_dialect_registry
+from .._mlir_libs._capi import _capi
+
+_dialect_registry = get_dialect_registry()
+
+if not hasattr(_capi, "mlirGetDialectHandle__{0}__"):
+    raise Exception("missing API")
+
+_capi.mlirGetDialectHandle__{0}__.argtypes = []
+_capi.mlirGetDialectHandle__{0}__.restype = ctypes.c_void_p
+
+_{0}_handle = _capi.mlirGetDialectHandle__{0}__()
+_dialect_registry.insert_dialect(_{0}_handle)
+
 )Py";
 
 /// Template for dialect class:
@@ -1191,7 +1206,7 @@ static bool emitAllOps(const RecordKeeper &records, raw_ostream &os) {
   if (clDialectName.empty())
     llvm::PrintFatalError("dialect name not provided");
 
-  os << fileHeader;
+  os << formatv(fileHeader, clDialectName.getValue());
   if (!clDialectExtensionName.empty())
     os << formatv(dialectExtensionTemplate, clDialectName.getValue());
   else

@@ -16,6 +16,14 @@ add_mlir_upstream_c_api_library(MLIRCAPIArith
   MLIRArithDialect
 )
 
+add_mlir_upstream_c_api_library(MLIRCAPIBuiltin
+  Builtin.cpp
+
+  PARTIAL_SOURCES_INTENDED
+  LINK_LIBS PUBLIC
+  MLIRCAPIIR
+)
+
 add_mlir_upstream_c_api_library(MLIRCAPIAsync
   Async.cpp
   AsyncPasses.cpp
