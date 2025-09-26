@@ -565,7 +565,7 @@ public:
 
   static void bindDerived(ClassTy &c) {
     c.def_static(
-        "get",
+        "get_checked",
         [](PyType &type, double value, DefaultingPyLocation loc) {
           PyMlirContext::ErrorCapture errors(loc->getContext());
           MlirAttribute attr = mlirFloatAttrDoubleGetChecked(loc, type, value);
@@ -574,6 +574,18 @@ public:
           return PyFloatAttribute(type.getContext(), attr);
         },
         nb::arg("type"), nb::arg("value"), nb::arg("loc") = nb::none(),
+        "Gets an uniqued float point attribute associated to a type");
+    c.def_static(
+        "get",
+        [](PyType &type, double value, DefaultingPyMlirContext context) {
+          PyMlirContext::ErrorCapture errors(context->getRef());
+          MlirAttribute attr =
+              mlirFloatAttrDoubleGet(context.get()->get(), type, value);
+          if (mlirAttributeIsNull(attr))
+            throw MLIRError("Invalid attribute", errors.take());
+          return PyFloatAttribute(type.getContext(), attr);
+        },
+        nb::arg("type"), nb::arg("value"), nb::arg("context") = nb::none(),
         "Gets an uniqued float point attribute associated to a type");
     c.def_static(
         "get_f32",
